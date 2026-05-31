@@ -1,30 +1,191 @@
-import { AIAgent } from "./components/site/AIAgent";
-import { Catalog } from "./components/site/Catalog";
-import { Contact } from "./components/site/Contact";
-import { Footer } from "./components/site/Footer";
-import { HeroSlider } from "./components/site/HeroSlider";
-import { Navbar } from "./components/site/Navbar";
-import { Portfolio } from "./components/site/Portfolio";
-import { Process } from "./components/site/Process";
-import { Services } from "./components/site/Services";
-import { Stats } from "./components/site/Stats";
+import { useState, useEffect } from "react";
+import { AuthProvider } from "./context/AuthContext";
+import { api } from "./utils/api";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import { AIAgent }     from "./components/site/AIAgent";
+import { Catalog }     from "./components/site/Catalog";
+import { Contact }     from "./components/site/Contact";
+import { Footer }      from "./components/site/Footer";
+import { HeroSlider }  from "./components/site/HeroSlider";
+import { Navbar }      from "./components/site/Navbar";
+import { Portfolio }   from "./components/site/Products/Portfolio";
+import { Process }     from "./components/site/Process";
+import { Services }    from "./components/site/Services";
 import { WhatsAppFab } from "./components/site/WhatsAppFab";
 
+import DashboardPage          from "./components/site/DashboardPage";
+import LoginPage              from "./components/site/LoginPage";
+import AdminLayout            from "./components/site/admin/AdminLayout";
+import ProtectedRoute         from "./components/site/auth/ProtectedRoute";
+import ClientsPage            from "./components/site/admin/ClientsPage";
+import ReservationsPage       from "./components/site/admin/ReservationsPage";
+import { PublicProductsPage } from "./components/site/Products/PublicProductsPage";
+import ProductDetailPage      from "./components/site/Products/ProductDetailPage";
+import { Layout }             from "./components/site/layouts/Layout";
+import AdminProductsPage      from "./components/site/admin/product-admin";
+import RegisterPage           from "./components/site/RegisterPage";
+import ClientRoute            from "./components/site/auth/ClientRoute";
+import MyReservationsPage     from "./components/site/client/MyReservationsPage";
+import MyProjectsPage         from "./components/site/client/MyProjectsPage";
 
-export default function App() {
+// ── Interfaces ───────────────────────────────────────────────────────────────
+
+interface Product {
+  _id: string;
+  name: string;
+  description?: string;
+  price: number | string;
+  stock?: number | string;
+  category?: string;
+  family?: string;
+  status: "active" | "inactive";
+  images: { url: string }[];
+  slug?: string;
+}
+
+interface CatalogData {
+  title: string;
+  subtitle: string;
+  desc: string;
+  pdf: string;
+  cover: string;
+  year: string;
+}
+
+// ── Static catalog data ───────────────────────────────────────────────────────
+
+const defaultCatalogs: CatalogData[] = [
+  {
+    title: "Portes en acier",
+    subtitle: "Menuiserie sur mesure",
+    desc: "Collection complète de portes industrielles et résidentielles...",
+    pdf: "/pdfs/menuiserie.pdf",
+    cover: "/covers/menuiserie.jpg",
+    year: "2024",
+  },
+  {
+    title: "Cuisines Équipées",
+    subtitle: "Design & solutions modernes",
+    desc: "Architectures de cuisine contemporaines...",
+    pdf: "/pdfs/cuisine.pdf",
+    cover: "/covers/cuisine.jpg",
+    year: "2024",
+  },
+  {
+    title: "Meta Meca",
+    subtitle: "Catalogue général",
+    desc: "L'ensemble de nos savoir-faire réunis...",
+    pdf: "/pdfs/meta.pdf",
+    cover: "/covers/meta.jpg",
+    year: "2024",
+  },
+];
+
+// ── SitePage ──────────────────────────────────────────────────────────────────
+
+function SitePage() {
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    api
+      .getProducts()
+      .then((data) => {
+        const unique = [
+          ...new Set(
+            data
+              .filter((p) => p.status === "active" && p.category)
+              .map((p) => p.category as string)
+          ),
+        ];
+        setCategories(unique);
+      })
+      .catch((err) => console.error("Erreur catégories:", err));
+  }, []);
+
+  const productCategories = categories.map((category) => ({
+    label: category,
+    desc: "Voir la collection",
+    href: `/produits?category=${encodeURIComponent(category)}`,
+  }));
+
+  const catalogItems = defaultCatalogs.map((c) => ({
+    label: c.title,
+    sub: c.subtitle,
+    href: c.pdf,
+  }));
+
   return (
     <main className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
+      <Navbar productCategories={productCategories} catalogItems={catalogItems} />
       <HeroSlider />
       <Services />
-      <Stats />
       <Process />
       <Portfolio />
       <Catalog />
       <Contact />
       <Footer />
-      <AIAgent />
-      <WhatsAppFab />
     </main>
+  );
+}
+
+// ── App (routing) ─────────────────────────────────────────────────────────────
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        {/* Global floating elements */}
+        <AIAgent />
+        <WhatsAppFab />
+
+        <Routes>
+          <Route path="/" element={<SitePage />} />
+
+          <Route
+            path="/my-reservations"
+            element={
+              <ClientRoute>
+                <Layout>
+                  <MyReservationsPage />
+                </Layout>
+              </ClientRoute>
+            }
+          />
+
+          <Route
+            path="/my-projects"
+            element={
+              <ClientRoute>
+                <Layout>
+                  <MyProjectsPage />
+                </Layout>
+              </ClientRoute>
+            }
+          />
+
+          <Route path="/produits" element={<Layout><PublicProductsPage /></Layout>} />
+          <Route path="/produits/:id" element={<Layout><ProductDetailPage /></Layout>} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardPage />} />
+            <Route path="products" element={<AdminProductsPage />} />
+            <Route path="clients" element={<ClientsPage />} />
+            <Route path="reservations" element={<ReservationsPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

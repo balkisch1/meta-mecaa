@@ -1,203 +1,512 @@
-import { Download, Eye, BookOpen } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Download, ArrowUpRight, BookOpen } from "lucide-react";
 
-import cMenuiserie from "../../assets/catalog-menuiserie.jpg";
-import cMetal from "../../assets/catalog-metal.jpg";
-import cDesign from "../../assets/catalog-design.jpg";
-import cCuisine from "../../assets/catalog-cuisine.jpg";
-import { Reveal } from "./Reveal";
-import { BookFlip } from "./BookFlip";
+import menuiserieCover from "../../assets/menuiserie.png";
+import cuisineCover    from "../../assets/cuisine.jpg";
+import MetaeCover      from "../../assets/metameca1.pdf.png";
 
-
+/* ─────────────────────────── Data ──────────────────────────── */
 const catalogs = [
   {
-    cover: cMenuiserie,
-    title: "Menuiserie & Bois",
-    edition: "Édition 2026",
-    pages: "48 pages",
-    desc: "Portes, dressings, mobilier sur mesure et finitions bois noble.",
-    accent: "from-[oklch(0.92_0.03_75)] to-[oklch(0.82_0.05_60)]",
+    title:    "Portes en acier",
+    subtitle: "Menuiserie sur mesure",
+    desc:     "Collection complète de portes industrielles et résidentielles, détails de finition et spécifications techniques.",
+    pdf:      "/pdfs/menuiserie.pdf",
+    cover:    menuiserieCover,
+    year:     "2024",
   },
   {
-    cover: cMetal,
-    title: "Fabrication Métallique",
-    edition: "Édition 2026",
-    pages: "56 pages",
-    desc: "Escaliers, garde-corps, portails et structures métalliques.",
-    accent: "from-[oklch(0.35_0.02_50)] to-[oklch(0.22_0.018_45)]",
+    title:    "Cuisines Équipées",
+    subtitle: "Design & solutions modernes",
+    desc:     "Architectures de cuisine contemporaines, matériaux nobles, configurations sur mesure.",
+    pdf:      "/pdfs/cuisine.pdf",
+    cover:    cuisineCover,
+    year:     "2024",
   },
   {
-    cover: cDesign,
-    title: "Design Intérieur",
-    edition: "Édition 2026",
-    pages: "64 pages",
-    desc: "Concepts complets, ambiances et inspirations sur mesure.",
-    accent: "from-[oklch(0.78_0.09_45)] to-[oklch(0.62_0.12_35)]",
-  },
-  {
-    cover: cCuisine,
-    title: "Cuisines Équipées",
-    edition: "Édition 2026",
-    pages: "40 pages",
-    desc: "Cuisines design, finitions premium et solutions optimisées.",
-    accent: "from-[oklch(0.88_0.04_70)] to-[oklch(0.70_0.08_55)]",
+    title:    "Meta Meca",
+    subtitle: "Catalogue général",
+    desc:     "L'ensemble de nos savoir-faire réunis : structures, façades, mobilier industriel.",
+    pdf:      "/pdfs/meta.pdf",
+    cover:    MetaeCover,
+    year:     "2024",
   },
 ];
 
+/* ─────────────────────────── Reveal hook ───────────────────── */
+function useReveal(threshold = 0.1) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, vis };
+}
+
+/* ─────────────────────────── Hero Catalog ──────────────────── */
+function HeroCatalog({ c, delay }: { c: typeof catalogs[0]; delay: number }) {
+  const [hovered, setHovered] = useState(false);
+  const { ref, vis } = useReveal(0.08);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity:   vis ? 1 : 0,
+        transform: vis ? "translateY(0)" : "translateY(40px)",
+        transition: `opacity 0.9s ease ${delay}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+        gridColumn: "1 / -1",
+      }}
+    >
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          position: "relative",
+          width: "100%",
+          aspectRatio: "21 / 9",
+          overflow: "hidden",
+          borderRadius: 2,
+          background: "#111",
+          cursor: "pointer",
+        }}
+      >
+        {/* Cover image */}
+        <img
+          src={c.cover}
+          alt={c.title}
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            objectFit: "cover",
+            transition: "transform 1800ms cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.6s",
+            transform: hovered ? "scale(1.06)" : "scale(1.02)",
+            opacity: hovered ? 0.75 : 0.62,
+          }}
+        />
+
+        {/* Soft cinematic overlays */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse at 60% 50%, transparent 25%, rgba(8,7,5,0.6) 100%)",
+        }} />
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "linear-gradient(to right, rgba(8,7,5,0.85) 0%, rgba(8,7,5,0.2) 55%, transparent 100%)",
+        }} />
+
+        {/* Year label */}
+        <div style={{
+          position: "absolute", top: 32, right: 36,
+          fontSize: 9, letterSpacing: "0.24em",
+          textTransform: "uppercase", color: "rgba(255,255,255,0.35)",
+          fontWeight: 500,
+        }}>
+          Vol. {c.year}
+        </div>
+
+        {/* Content */}
+        <div style={{
+          position: "absolute", left: 0, bottom: 0, top: 0,
+          display: "flex", flexDirection: "column",
+          justifyContent: "flex-end",
+          padding: "0 48px 44px",
+          maxWidth: 560,
+        }}>
+          <p style={{
+            fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase",
+            color: "rgba(201,169,110,0.8)", fontWeight: 500,
+            marginBottom: 16,
+          }}>
+            {c.subtitle}
+          </p>
+          <h3 style={{
+            fontSize: "clamp(26px, 4vw, 48px)",
+            fontWeight: 300,
+            fontFamily: "'Georgia', serif",
+            fontStyle: "italic",
+            lineHeight: 1.1,
+            letterSpacing: "-0.025em",
+            color: "#f5f0e8",
+            margin: "0 0 16px",
+          }}>
+            {c.title}
+          </h3>
+          <p style={{
+            fontSize: 13, color: "rgba(255,255,255,0.42)",
+            lineHeight: 1.7, maxWidth: 380, margin: "0 0 28px",
+            opacity: hovered ? 1 : 0,
+            transform: hovered ? "translateY(0)" : "translateY(8px)",
+            transition: "opacity 0.5s ease, transform 0.5s ease",
+          }}>
+            {c.desc}
+          </p>
+
+          {/* Actions */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 24,
+            opacity: hovered ? 1 : 0,
+            transform: hovered ? "translateY(0)" : "translateY(6px)",
+            transition: "opacity 0.45s ease 0.05s, transform 0.45s ease 0.05s",
+          }}>
+            <a
+              href={c.pdf}
+              target="_blank"
+              rel="noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
+                fontWeight: 600, color: "#0d3875",
+                textDecoration: "none",
+                borderBottom: "1px solid rgba(201,169,110,0.4)",
+                paddingBottom: 2,
+              }}
+            >
+              Feuilleter <ArrowUpRight size={12} />
+            </a>
+            <a
+              href={c.pdf}
+              download
+              onClick={e => e.stopPropagation()}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
+                fontWeight: 500, color: "rgba(255,255,255,0.4)",
+                textDecoration: "none",
+              }}
+            >
+              <Download size={11} /> PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Secondary Card ────────────────── */
+function LookbookCard({ c, delay, ratio = "3/4" }: { c: typeof catalogs[0]; delay: number; ratio?: string }) {
+  const [hovered, setHovered] = useState(false);
+  const { ref, vis } = useReveal(0.1);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity:   vis ? 1 : 0,
+        transform: vis ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity 0.85s ease ${delay}ms, transform 0.85s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+      }}
+    >
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          position: "relative",
+          width: "100%",
+          aspectRatio: ratio,
+          overflow: "hidden",
+          borderRadius: 2,
+          background: "#111",
+          cursor: "pointer",
+        }}
+      >
+        {/* Cover */}
+        <img
+          src={c.cover}
+          alt={c.title}
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            objectFit: "cover",
+            transition: "transform 1500ms cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.5s",
+            transform: hovered ? "scale(1.08)" : "scale(1.02)",
+            opacity: hovered ? 0.72 : 0.6,
+          }}
+        />
+
+        {/* Overlay */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "linear-gradient(to top, rgba(8,7,5,0.92) 0%, rgba(8,7,5,0.1) 55%, transparent 100%)",
+        }} />
+
+        {/* Year */}
+        <div style={{
+          position: "absolute", top: 18, right: 18,
+          fontSize: 8, letterSpacing: "0.2em",
+          textTransform: "uppercase", color: "rgba(255,255,255,0.3)",
+        }}>
+          {c.year}
+        </div>
+
+        {/* Content block */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          padding: "0 22px 24px",
+        }}>
+          <p style={{
+            fontSize: 8, letterSpacing: "0.22em", textTransform: "uppercase",
+            color: "rgba(201,169,110,0.7)", fontWeight: 500,
+            margin: "0 0 10px",
+          }}>
+            {c.subtitle}
+          </p>
+          <h3 style={{
+            fontSize: "clamp(15px, 1.8vw, 20px)",
+            fontWeight: 300,
+            fontFamily: "'Georgia', serif",
+            fontStyle: "italic",
+            lineHeight: 1.15,
+            letterSpacing: "-0.015em",
+            color: "#f0ece4",
+            margin: "0 0 14px",
+          }}>
+            {c.title}
+          </h3>
+
+          {/* Hover actions */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 18,
+            opacity: hovered ? 1 : 0,
+            transform: hovered ? "translateY(0)" : "translateY(6px)",
+            transition: "opacity 0.4s ease, transform 0.4s ease",
+          }}>
+            <a
+              href={c.pdf}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase",
+                fontWeight: 600, color: "#ffffff",
+                textDecoration: "none",
+                borderBottom: "1px solid rgba(40, 38, 36, 0.35)",
+                paddingBottom: 2,
+              }}
+            >
+              Feuilleter <ArrowUpRight size={10} />
+            </a>
+            <a
+              href={c.pdf}
+              download
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase",
+                fontWeight: 500, color: "rgba(255,255,255,0.38)",
+                textDecoration: "none",
+              }}
+            >
+              <Download size={10} /> PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Main Component ────────────────── */
 export function Catalog() {
+  const { ref: headerRef, vis: headerVis } = useReveal(0.1);
+  const { ref: ctaRef,    vis: ctaVis    } = useReveal(0.1);
+
+  const [hero, ...rest] = catalogs;
+
   return (
     <section
       id="catalogue"
-      className="py-28 lg:py-36 relative overflow-hidden"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.94 0.022 75) 0%, oklch(0.975 0.012 80) 100%)",
+        position: "relative",
+        overflow: "hidden",
+        padding: "100px 0 0",
+        background: "#ffffff",
       }}
     >
-      {/* texture */}
-      <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_20%_30%,var(--gold)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      {/* Subtle horizontal rules for texture */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(0,0,0,0.025) 79px, rgba(0,0,0,0.025) 80px)",
+      }} />
 
-      <div className="container mx-auto px-6 relative">
+      <div style={{ width: "100%", margin: 0, padding: "0 20px", position: "relative" }}>
 
-        {/* HEADER */}
-        <Reveal>
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <div className="inline-flex items-center gap-3 mb-5">
-              <span className="h-px w-10 bg-gold" />
-              <span className="text-gold tracking-[0.3em] uppercase text-xs font-semibold">
-                Catalogues
-              </span>
-              <span className="h-px w-10 bg-gold" />
-            </div>
+        {/* ── Header ── */}
+        <div
+          ref={headerRef}
+          style={{
+            marginBottom: 72,
+            opacity: headerVis ? 1 : 0,
+            transform: headerVis ? "translateY(0)" : "translateY(24px)",
+            transition: "opacity 0.8s ease, transform 0.8s cubic-bezier(0.22,1,0.36,1)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+            <div style={{ height: 1, width: 40, background: "rgba(201,169,110,0.55)" }} />
+            <span style={{
+              fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase",
+              fontWeight: 600, color: "#0d3875",
+            }}>
+              Catalogues
+            </span>
+          </div>
 
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6">
+          <div style={{
+            display: "flex", alignItems: "flex-end",
+            justifyContent: "space-between", gap: 32, flexWrap: "wrap",
+          }}>
+            <h2 style={{
+              fontSize: "clamp(30px, 5vw, 58px)",
+              fontWeight: 300,
+              fontFamily: "'Georgia', serif",
+              fontStyle: "italic",
+              lineHeight: 1.08,
+              letterSpacing: "-0.03em",
+              color: "#1a1816",
+              margin: 0,
+              maxWidth: 500,
+            }}>
               Nos collections en{" "}
-              <span className="italic text-gradient-gold">éditions limitées</span>
+              <span style={{ fontStyle: "normal", color: "#1a1816" }}>éditions</span>
             </h2>
-
-            <p className="text-muted-foreground text-lg">
-              Feuilletez nos lookbooks imprimés sur papier d'art. Inspirations,
-              finitions et références produits — disponibles en téléchargement ou sur demande.
+            <p style={{
+              fontSize: 13, color: "rgba(0,0,0,0.38)", lineHeight: 1.75,
+              maxWidth: 320, margin: 0, paddingBottom: 6,
+            }}>
+              Inspirations, finitions et références produits — disponibles en téléchargement ou sur demande.
             </p>
           </div>
-        </Reveal>
-
-        {/* GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14">
-          {catalogs.map((c, i) => (
-            <Reveal key={c.title} delay={i * 100}>
-              <article className="group relative">
-
-                {/* CARD */}
-                <div className="
-                  relative rounded-sm overflow-hidden
-                  bg-white/60 backdrop-blur
-                  border border-black/5
-                  shadow-[0_20px_60px_rgba(0,0,0,0.08)]
-                  hover:shadow-[0_30px_80px_rgba(0,0,0,0.15)]
-                  transition-all duration-500
-                  hover:-translate-y-2
-                ">
-
-                  {/* COVER */}
-                  <div className="mb-6">
-                    <BookFlip
-                      cover={c.cover}
-                      title={c.title}
-                      edition={c.edition}
-                      pages={c.pages}
-                      accent={c.accent}
-                    />
-                  </div>
-
-                  {/* CONTENT */}
-                  <div className="px-5 pb-6">
-                    <h4 className="font-display text-xl font-semibold mb-2 tracking-tight">
-                      {c.title}
-                    </h4>
-
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                      {c.desc}
-                    </p>
-
-                    {/* ACTIONS */}
-                    <div className="flex gap-2">
-                      <a
-                        href="#contact"
-                        className="
-                          flex-1 inline-flex items-center justify-center gap-2
-                          px-4 py-2.5
-                          bg-black text-white
-                          rounded-sm text-xs font-semibold tracking-wide
-                          hover:bg-gold hover:text-black
-                          transition-all duration-300
-                        "
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        Feuilleter
-                      </a>
-
-                      <a
-                        href="#contact"
-                        className="
-                          inline-flex items-center justify-center gap-2
-                          px-4 py-2.5
-                          border border-black/10
-                          rounded-sm text-xs font-semibold tracking-wide
-                          hover:border-gold hover:text-gold
-                          transition-all duration-300
-                        "
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        PDF
-                      </a>
-                    </div>
-                  </div>
-
-                </div>
-              </article>
-            </Reveal>
-          ))}
         </div>
 
-        {/* CTA BOTTOM */}
-        <Reveal delay={200}>
-          <div className="mt-20 relative overflow-hidden rounded-sm bg-gradient-dark text-primary-foreground p-10 lg:p-14 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 shadow-elegant">
+        {/* ── Hero + secondary grid ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-            <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-gradient-copper opacity-20 blur-3xl" />
+          {/* Hero full-width */}
+          <HeroCatalog c={hero} delay={0} />
 
-            <div className="relative max-w-xl">
-              <div className="text-xs tracking-[0.3em] uppercase text-gold mb-3">
-                Édition collector
-              </div>
-
-              <h3 className="font-display text-3xl md:text-4xl font-semibold leading-tight mb-3">
-                Recevez le coffret complet imprimé
-              </h3>
-
-              <p className="text-white/70">
-                Les 4 catalogues réunis dans un coffret signé Meta Meca, livré à domicile.
-              </p>
+          {/* Secondary cards — asymmetric split */}
+          {rest.length > 0 && (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: rest.length === 1 ? "1fr" : "3fr 2fr",
+              gap: 10,
+            }}>
+              {rest.map((c, i) => (
+                <LookbookCard
+                  key={c.title}
+                  c={c}
+                  delay={100 + i * 90}
+                  ratio={rest.length === 1 ? "21/9" : i === 0 ? "4/3" : "4/3"}
+                />
+              ))}
             </div>
+          )}
+        </div>
+      </div>
 
-            <a
-              href="#contact"
-              className="
-                relative inline-flex items-center gap-3
-                px-8 py-4
-                bg-gradient-gold text-gold-foreground
-                rounded-sm font-semibold
-                shadow-gold
-                hover:scale-105 transition-transform
-                whitespace-nowrap
-              "
-            >
-              Demander le coffret
-              <BookOpen className="w-4 h-4" />
-            </a>
+      {/* ── Cinematic CTA banner (full bleed) ── */}
+      <div
+        ref={ctaRef}
+        style={{
+          marginTop: 80,
+          position: "relative",
+          overflow: "hidden",
+          background: "#0b0c0f",
+          padding: "80px 0 96px",
+          opacity: ctaVis ? 1 : 0,
+          transform: ctaVis ? "translateY(0)" : "translateY(32px)",
+          transition: "opacity 0.9s ease 0.15s, transform 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s",
+        }}
+      >
+        {/* Atmospheric glow */}
+        <div style={{
+          position: "absolute",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 600, height: 300,
+          background: "radial-gradient(ellipse, rgba(201,169,110,0.08) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
 
+        {/* Horizontal rule */}
+        <div style={{
+          position: "absolute",
+          top: 0, left: "10%", right: "10%",
+          height: 1,
+          background: "linear-gradient(to right, transparent, rgba(201,169,110,0.2), transparent)",
+        }} />
+
+        <div style={{ 
+  maxWidth: "1700px", // ou 1800px
+  width: "100%",
+  margin: "0 auto",
+  padding: "0 60px",
+  position: "relative"
+}}>
+          <div style={{ maxWidth: 520 }}>
+            <p style={{
+              fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase",
+              color: "rgba(201,169,110,0.6)", fontWeight: 500,
+              margin: "0 0 18px",
+            }}>
+              Édition collector
+            </p>
+            <h3 style={{
+              fontSize: "clamp(22px, 3.5vw, 42px)",
+              fontWeight: 300,
+              fontFamily: "'Georgia', serif",
+              fontStyle: "italic",
+              lineHeight: 1.12,
+              letterSpacing: "-0.025em",
+              color: "#f0ece4",
+              margin: "0 0 14px",
+            }}>
+              Recevez le coffret complet imprimé
+            </h3>
+            <p style={{
+              fontSize: 13, color: "rgba(255,255,255,0.35)",
+              lineHeight: 1.75, margin: 0,
+            }}>
+              Les {catalogs.length} catalogues réunis dans un coffret signé Meta Meca,<br />
+              livré à domicile sur demande.
+            </p>
           </div>
-        </Reveal>
 
+          <a
+            href="#contact"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 12,
+              padding: "16px 36px",
+              border: "1px solid rgba(201,169,110,0.35)",
+              borderRadius: 1,
+              fontSize: 10, letterSpacing: "0.22em",
+              textTransform: "uppercase", fontWeight: 600,
+              color: "#ffffff",
+              textDecoration: "none",
+              transition: "background 0.3s ease, border-color 0.3s ease",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLAnchorElement).style.background = "rgba(0, 81, 255, 0.08)";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(201,169,110,0.65)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(201,169,110,0.35)";
+            }}
+          >
+            Demander le coffret
+            <BookOpen size={13} />
+          </a>
+        </div>
       </div>
     </section>
   );
